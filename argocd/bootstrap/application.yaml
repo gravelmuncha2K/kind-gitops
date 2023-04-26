@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cluster-bootstrap
+spec:
+  generators:
+  - git:
+      repoURL: https://github.com/gravelmuncha2K/kind-gitops.git
+      revision: main
+      directories:
+      - path: argocd/apps/*
+  template:
+    metadata:
+      name: '{{ path.basename }}'
+    spec:
+      project: platform-main-project
+      source:
+        repoURL: https://github.com/gravelmuncha2K/kind-gitops.git
+        targetRevision: main
+        path: '{{ path }}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ path.basename }}'
+      syncPolicy:
+        automated:
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

@@ -1,0 +1,52 @@
+argo-cd:
+  crds:
+    # -- Install and upgrade CRDs
+    install: true
+    # -- Keep CRDs on chart uninstall
+    keep: true
+
+  logging:
+    # -- Set global logging format to json
+    format: json
+    # -- Set global logging level to info
+    level: info
+
+  global:
+    image:
+      tag: v2.5.15
+
+  server:
+    ingress:
+      # -- Enable an ingress resource for the ArgoCD server
+      enabled: true
+      # -- Additional ingress annotations
+      annotations:
+        cert-manager.io/cluster-issuer: local-dev-cluster-issuer
+        nginx.ingress.kubernetes.io/ssl-passthrough: true
+        nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+      # -- Define which ingress controller will implement the resource
+      ingressClassName: nginx
+      # -- List of ingress hosts
+      hosts:
+        - argocd.apps.127.0.0.1.nip.io
+      https: true
+      tls:
+        - hosts:
+            - argocd.apps.127.0.0.1.nip.io
+          secretName: argocd-cert-tls
+  configs:
+    cm:
+      configManagementPlugins: |
+        - name: kustomized-helm
+          init:
+            command: ["/bin/sh", "-c"]
+            args: ["helm dependency build"]
+          generate:
+            command: ["/bin/sh", "-c"]
+            args: ["helm template $ARGOCD_APP_NAME . > all.yaml && kustomize build"]
+      resourceExclusions: |
+        - apiGroups:
+          - tekton.dev
+          kinds:
+          - PipelineRun
+          - TaskRun

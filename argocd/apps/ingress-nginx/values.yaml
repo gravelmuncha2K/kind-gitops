@@ -1,0 +1,24 @@
+ingress-nginx:
+  controller:
+    admissionWebhooks:
+      certManager:
+        enable: false
+    extraArgs:
+      publish-status-address: localhost
+    hostPort:
+      enabled: true
+    publishService:
+      enabled: false
+    service:
+      type: NodePort
+    tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Equal
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+        operator: Equal
+    watchIngressWithoutClass: true
+    nodeSelector:
+      ingress-ready: "true"
+      kubernetes.io/os: linux

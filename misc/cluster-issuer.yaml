@@ -1,0 +1,9 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: local-dev-cluster-issuer
+spec:
+  ca:
+    # By default cert-manager cluster issuer will look into 
+    # namespace cert-manager to find the secret
+    secretName: mkcert 

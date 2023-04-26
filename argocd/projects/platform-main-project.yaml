@@ -1,0 +1,33 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform-main-project
+  namespace: argocd
+spec:
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  description: Platform Team Services Application Project to Orchestrate Deployments through ArgoCD
+  destinations:
+  - name: in-cluster
+    namespace: ingress-nginx
+    server: https://kubernetes.default.svc
+  - name: in-cluster
+    namespace: argocd
+    server: https://kubernetes.default.svc
+  - name: in-cluster
+    namespace: tekton-pipelines*
+    server: https://kubernetes.default.svc
+  - name: in-cluster
+    namespace: cert-manager
+    server: https://kubernetes.default.svc
+  - name: in-cluster
+    namespace: kube-system
+    server: https://kubernetes.default.svc
+  sourceRepos:
+  - https://argoproj.github.io/argo-helm
+  - https://kubernetes.github.io/ingress-nginx
+  - https://storage.googleapis.com/tekton-releases/*
+  - https://github.com/gravelmuncha2K/*
+  - https://charts.jetstack.io

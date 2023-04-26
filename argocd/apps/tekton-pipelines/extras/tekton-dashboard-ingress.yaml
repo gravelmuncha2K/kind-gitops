@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: local-dev-cluster-issuer
+  name: tekton-dashboard-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: tekton.apps.127.0.0.1.nip.io
+    http:
+      paths:
+      - backend:
+          service:
+            name: tekton-dashboard
+            port:
+              number: 9097
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - tekton.apps.127.0.0.1.nip.io
+    secretName: tekton-cert-tls
