@@ -8,7 +8,7 @@ spec:
   clusterResourceWhitelist:
   - group: '*'
     kind: '*'
-  description: Platform Team Services Application Project to Orchestrate Deployments through ArgoCD
+  description: Platform Services Application Project to Orchestrate Deployments through ArgoCD
   destinations:
   - name: in-cluster
     namespace: ingress-nginx

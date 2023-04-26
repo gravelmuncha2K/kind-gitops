@@ -1,13 +1,8 @@
 BLUE=\033[0;34m
 NC=\033[0m
 
-# Cert-Manager Environment
+# Bootstrap namespaces
 CERTMANAGER_NAMESPACE=cert-manager
-CERTMANAGER_CHART_VERSION=1.10.2
-
-# ArgoCD Environment
-ARGOCD_APP_VERSION=v2.5.15
-ARGOCD_CHART_VERSION=5.29.1
 ARGOCD_NAMESPACE=argocd
 
 all: cluster cert-manager argocd
@@ -27,14 +22,18 @@ cert-manager:
 	fi
 	@helm repo add cert-manager https://charts.jetstack.io
 	@if [ $$(helm --namespace ${CERTMANAGER_NAMESPACE} ls | grep cert-manager | wc -l) = 0 ]; then \
-		helm upgrade --install cert-manager cert-manager/cert-manager --version ${CERTMANAGER_CHART_VERSION} --namespace ${CERTMANAGER_NAMESPACE}; \
+		helm dependency build argocd/apps/cert-manager/ ; \
+		helm upgrade --install --namespace ${CERTMANAGER_NAMESPACE} cert-manager ./argocd/apps/cert-manager/ --values ./argocd/apps/cert-manager/values.yaml ; \
 	fi
 	@echo "${BLUE}Waiting for resources to be created (100s)${NC}"
 	@sleep 10
 	@kubectl wait --namespace ${CERTMANAGER_NAMESPACE} --for=condition=ready pod --selector=app.kubernetes.io/instance=cert-manager --timeout=90s
 	@echo "${BLUE}Creating Cert-Manager resources...${NC}"
-	@kubectl --namespace ${CERTMANAGER_NAMESPACE} create secret tls mkcert --key certificates/rootCA-key.pem --cert certificates/rootCA.pem
-	@kubectl apply -f resources/cluster-issuer.yaml
+	@if [ $$(kubectl --namespace ${CERTMANAGER_NAMESPACE} get secret | grep mkcert | wc -l) = 0 ]; then \
+		kubectl --namespace ${CERTMANAGER_NAMESPACE} create secret tls mkcert --key certificates/rootCA-key.pem --cert certificates/rootCA.pem; \
+	fi
+	@kubectl apply -f ./misc/cluster-issuer.yaml
+	@echo "${BLUE}Cert-Manager deployment successful.${NC}"
 
 argocd:
 	@echo "${BLUE}Deploying ArgoCD...${NC}"
@@ -43,20 +42,19 @@ argocd:
 	fi
 	@helm repo add argo https://argoproj.github.io/argo-helm
 	@if [ $$(helm --namespace ${ARGOCD_NAMESPACE} ls | grep argocd | wc -l) = 0 ]; then \
-		helm upgrade --install argocd argo/argo-cd --version ${ARGOCD_CHART_VERSION} --namespace ${ARGOCD_NAMESPACE} --set global.image.tag=${ARGOCD_APP_VERSION}; \
+		helm dependency build argocd/apps/argocd/ ; \
+		helm upgrade --install --namespace ${ARGOCD_NAMESPACE} argocd ./argocd/apps/argocd/ --values ./argocd/apps/argocd/values.yaml; \
 	fi
 	@echo "${BLUE}Waiting for resources to be created (100s)${NC}"
 	@sleep 10
 	@kubectl wait --namespace ${ARGOCD_NAMESPACE} --for=condition=ready pod --selector=app.kubernetes.io/part-of=argocd --timeout=90s
 	@kubectl apply -f ./argocd/projects/ --namespace ${ARGOCD_NAMESPACE}
 	@kubectl apply -f ./argocd/bootstrap/ --namespace ${ARGOCD_NAMESPACE}
+	@echo "${BLUE}ArgoCD deployment successful.${NC}"
 
-argocd-credentials:
+argocd-login:
 	@echo "${BLUE}Print ArgoCD Admin credentials...${NC}"
 	@kubectl --namespace ${ARGOCD_NAMESPACE} get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-
-argocd-port-forward:
-	@echo "${BLUE}Make ArgoCD available via port-forward...${NC}"
 	@xdg-open https://argocd.apps.127.0.0.1.nip.io
 
 .PHONY: all cluster argocd

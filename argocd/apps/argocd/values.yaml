@@ -50,3 +50,16 @@ argo-cd:
           kinds:
           - PipelineRun
           - TaskRun
+    repositories:
+      argo-helm-repo:
+        url: https://argoproj.github.io/argo-helm
+        name: argo
+        type: helm
+      ingress-nginx-helm-repo:
+        url: https://kubernetes.github.io/ingress-nginx
+        name: ingress-nginx
+        type: helm
+      cert-manager-helm-repo:
+        url: https://charts.jetstack.io
+        name: cert-manager
+        type: helm

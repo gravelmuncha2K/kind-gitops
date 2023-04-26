@@ -1,1 +1,3 @@
 certificates/rootCA*
+argocd/apps/*/charts
+argocd/apps/*/Chart.lock
