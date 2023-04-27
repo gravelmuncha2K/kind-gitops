@@ -16,6 +16,8 @@ argo-cd:
       tag: v2.5.15
 
   server:
+    extensions:
+      enabled: true
     ingress:
       # -- Enable an ingress resource for the ArgoCD server
       enabled: true
