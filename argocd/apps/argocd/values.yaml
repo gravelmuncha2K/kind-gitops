@@ -36,20 +36,22 @@ argo-cd:
           secretName: argocd-cert-tls
   configs:
     cm:
-      configManagementPlugins: |
-        - name: kustomized-helm
-          init:
-            command: ["/bin/sh", "-c"]
-            args: ["helm dependency build"]
-          generate:
-            command: ["/bin/sh", "-c"]
-            args: ["helm template $ARGOCD_APP_NAME . > all.yaml && kustomize build"]
       resourceExclusions: |
         - apiGroups:
           - tekton.dev
           kinds:
           - PipelineRun
           - TaskRun
+    cmp:
+      create: true
+      plugins:
+        kustomized-helm:
+          init:
+            command: ["/bin/sh", "-c"]
+            args: ["helm dependency build"]
+          generate:
+            command: ["/bin/sh", "-c"]
+            args: ["helm template . --name-template $ARGOCD_APP_NAME --namespace $ARGOCD_APP_NAMESPACE --include-crds > all.yaml && kustomize build"]
     repositories:
       argo-helm-repo:
         url: https://argoproj.github.io/argo-helm
